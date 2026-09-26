@@ -721,9 +721,10 @@ def weekly_report_to_json(report: WeeklyReport) -> str:
 
 def main():
     import argparse
+    import os
     from pathlib import Path
     p = argparse.ArgumentParser()
-    p.add_argument("--db", default="/root/.zepp-data/zepp.db")
+    p.add_argument("--db", default=str(Path(os.environ.get("ZEPP_DATA_DIR", str(Path.home() / ".zepp-data"))) / "zepp.db"))
     p.add_argument("--track-id", help="compute workout insight for track_id")
     p.add_argument("--weekly", action="store_true", help="compute weekly report")
     p.add_argument("--all-recent-runs", action="store_true",

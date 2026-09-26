@@ -311,7 +311,7 @@ def ensure_table(conn: sqlite3.Connection):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--db", default="/root/.zepp-data/zepp.db")
+    p.add_argument("--db", default=str(Path(os.environ.get("ZEPP_DATA_DIR", str(Path.home() / ".zepp-data"))) / "zepp.db"))
     p.add_argument("--from", dest="from_date", help="只拉 >= YYYY-MM-DD 的活动")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()

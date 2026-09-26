@@ -6,6 +6,61 @@ Versioning: [SemVer](https://semver.org/)
 
 ---
 
+## [4.0.1] — 2026-09-26
+
+Bug-fix release addressing user-reported issues from `v4.0.0` testing on
+non-PRoot Linux / macOS systems.
+
+### Fixed
+
+- **DB path respects `ZEPP_DATA_DIR`** — `daily_report.py`,
+  `query_zepp.py` (`ensure_fresh`), `compute_calorie_total.py`,
+  `fetch_workouts.py`, `fix_workout_altitude_units.py`, `insight.py` and
+  `tests/generate_daily_report_sample.py` no longer hardcode
+  `/root/.zepp-data/zepp.db`. They now read `ZEPP_DATA_DIR` first, then fall
+  back to `~/.zepp-data/zepp.db`. **Fixes the bug where non-root users (or
+  any user with `~/.zepp-data/` protected) couldn't run daily report, weekly
+  insight, calorie computation, or workout fetching.**
+- **README** — added a "数据目录自定义 (可选)" section explaining
+  `ZEPP_DATA_DIR`, and a "手机号格式" section clarifying that the `+86`
+  prefix is **added by the code** for 国服 accounts (and that international
+  users should use `--email` instead).
+- **`scripts/zepp_oauth.py login` help text** — corrected two misleading
+  claims: (a) login does **not** kick the phone Zepp App (it uses
+  `APP_NAME=com.xiaomi.hm.health` which is a separate session), (b) the
+  `--phone` arg receives a bare 11-digit number and the script automatically
+  prepends `+86`.
+- **`scripts/init.py`** — error message now interpolates the actual
+  `DATA_DIR` instead of hardcoding `~/.zepp-data`.
+- **`tests/test_sync_silent_reauth.py`** — the 5 failing tests now also mock
+  `_maybe_refresh_token_before_sync`. Without this mock the test was actually
+  invoking the real `zepp_oauth.py refresh` subprocess, which was using the
+  user's real (expired) token and surfacing real account info in test
+  output. All 11 silent-reauth tests now pass cleanly without any network
+  access.
+- **`tests/generate_daily_report_sample.py`** — restored 4 lines that had
+  been accidentally corrupted during the v4.0.0 PII redaction step
+  (`v["value"] for v in rows`, `completeness =`, `time_in_bed_secs']`,
+  weight section), and removed a duplicate `if __name__ == "__main__":`
+  block. The sample report script is now syntactically valid.
+
+### Changed
+
+- The PII-redacted values inside `USER_PROFILE_ROW` were also adjusted so the
+  Mifflin BMR self-consistency checks still hold:
+  `172 cm / 69 kg / 37 y/o / 男 → 1,585 kcal` is now
+  `175 cm / 70 kg / 36 y/o / 男 → 1,619 kcal` (same Mifflin formula,
+  obviously fake values). See `references/calorie-bmr.md` for derivation.
+
+### Test status
+
+- 484 passed (+11 silent-reauth tests now runnable), 0 regressions.
+- The same 4 pre-existing failures remain (DST ×2, HR zone ×1, stress ×1)
+  and are unrelated to v4.0.1 — they document real Zepp-app-vs-recomputed
+  discrepancies and are tracked for the next milestone.
+
+---
+
 ## [4.0.0] — 2026-09-26
 
 Initial open-source release. Contains all milestones M1–M9 from the internal

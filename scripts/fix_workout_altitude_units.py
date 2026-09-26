@@ -20,6 +20,7 @@
 """
 from __future__ import annotations
 import argparse
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -111,7 +112,7 @@ def fix_db(db_path: str, dry_run: bool) -> None:
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--db", default="/root/.zepp-data/zepp.db")
+    p.add_argument("--db", default=str(Path(os.environ.get("ZEPP_DATA_DIR", str(Path.home() / ".zepp-data"))) / "zepp.db"))
     p.add_argument("--dry-run", action="store_true", help="只扫描，不写入")
     args = p.parse_args()
     if not Path(args.db).exists():

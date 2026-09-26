@@ -54,6 +54,25 @@ export ZEPP_PASSWORD='你的真实密码'
 
 > ⚠️ **安全**：**不要把密码发到对话**——AI 完全看不到环境变量。
 
+### 数据目录自定义（可选）
+
+默认所有数据存到 `~/.zepp-data/`（数据库 + token + 日志）。如果这个目录被系统保护、或者你想换个位置：
+
+```bash
+export ZEPP_DATA_DIR=/path/to/writable/dir
+```
+
+所有脚本（`pull_to_sqlite.py` / `query_zepp.py` / `daily_report.py` / `dashboard*.py` 等）都会自动读这个变量。**`compute_calorie_total.py` / `fetch_workouts.py` / `insight.py` 在 v4.0.1+ 也支持这个变量。**
+
+### 手机号格式
+
+**国服账号**（`api-mifit-cn3.zepp.com`）：
+- `--phone` 传**11 位裸数字**（代码自动加 `+86` 前缀）
+- 例如 `--phone 186XXXXXXXX`（代码内部变成 `+86186057XXXXX`）
+- 如果服务端不接受 `+86`，多半是**国际服账号**改用 `--email`
+
+**国际服账号**（`api-mifit-us3.zepp.com` 等）：用 `--email user@example.com`，不需要 `--phone`。
+
 ### 3. OAuth 登录
 
 ```bash

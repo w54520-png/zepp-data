@@ -53,7 +53,7 @@ from generate_daily_report_sample import (  # noqa: E402
 sys.path.insert(0, str(_SKILL_DIR))
 from time_utils import DEFAULT_TZ  # noqa: E402
 
-DB_PATH = Path("/root/.zepp-data/zepp.db")
+DB_PATH = Path(os.environ.get("ZEPP_DATA_DIR", str(Path.home() / ".zepp-data"))) / "zepp.db"
 PULL_SCRIPT = _SKILL_DIR / "pull_to_sqlite.py"
 OAUTH_SCRIPT = _SKILL_DIR / "zepp_oauth.py"
 INIT_SCRIPT = _SKILL_DIR / "init.py"

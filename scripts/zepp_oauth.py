@@ -592,9 +592,9 @@ def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    p_login = sub.add_parser("login", help="OAuth 登录（3 步流程，会踢手机 App）")
-    p_login.add_argument("--phone", help="手机号（不带 +86）")
-    p_login.add_argument("--email", help="邮箱")
+    p_login = sub.add_parser("login", help="OAuth 登录（3 步流程；**不踢**手机 Zepp App，依赖 APP_NAME=com.xiaomi.hm.health）")
+    p_login.add_argument("--phone", help="国服手机号（11 位裸数字，代码自动加 +86 前缀；国际服用 --email）")
+    p_login.add_argument("--email", help="国际服账号邮箱（不需要 --phone）")
     p_login.add_argument("--password-file", help="密码文件（chmod 600）")
     p_login.add_argument("--device-id", help="自定义 device_id")
     p_login.set_defaults(func=cmd_login)

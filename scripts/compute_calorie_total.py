@@ -17,6 +17,7 @@ gender 字段：Zepp 反人类约定（1=男, 0=女）—— 跟常规相反。
 """
 from __future__ import annotations
 import argparse
+import os
 import sqlite3
 from datetime import date, datetime
 from pathlib import Path
@@ -51,7 +52,7 @@ def bmr_for_profile(gender: int, weight_kg: float, height_cm: float, age: int) -
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--db", default="/root/.zepp-data/zepp.db")
+    p.add_argument("--db", default=str(Path(os.environ.get("ZEPP_DATA_DIR", str(Path.home() / ".zepp-data"))) / "zepp.db"))
     p.add_argument("--dry-run", action="store_true")
     # M3 章节 3.5：加 zepp_med 选项（最近 N 次 BMR 中位数）解决 Zepp 体重秤 BMR 漂移
     p.add_argument("--bmr-source", choices=["formula", "zepp_app", "zepp_api", "zepp_med"],

@@ -141,11 +141,12 @@ def test_reauth_triggered_on_401(tmp_path):
 
     with _HomeSandbox(tmp_path):
         with patch.object(pts, "fetch_and_normalize", side_effect=fake_fetch):
-            with patch.object(pts, "_silent_reauth", side_effect=fake_silent_reauth):
-                args = _make_args(db_path, days=7)
-                buf = io.StringIO()
-                with redirect_stdout(buf):
-                    rc = pts.cmd_sync(args)
+            with patch("pull_to_sqlite._maybe_refresh_token_before_sync", return_value=True):
+                with patch("pull_to_sqlite._silent_reauth", side_effect=fake_silent_reauth):
+                    args = _make_args(db_path, days=7)
+                    buf = io.StringIO()
+                    with redirect_stdout(buf):
+                        rc = pts.cmd_sync(args)
     out = buf.getvalue()
 
     assert rc == 0, f"cmd_sync 应返 0，得到 {rc}"
@@ -193,11 +194,15 @@ def test_no_reauth_on_normal_failure(tmp_path):
 
     with _HomeSandbox(tmp_path):
         with patch.object(pts, "fetch_and_normalize", side_effect=fake_fetch_network):
-            with patch.object(pts, "_silent_reauth", side_effect=fake_silent_reauth):
-                args = _make_args(db_path, days=7)
+            with patch("pull_to_sqlite._maybe_refresh_token_before_sync", return_value=True):
+                with patch("pull_to_sqlite._silent_reauth", side_effect=fake_silent_reauth):
+                    args = _make_args(db_path, days=7)
+                    buf = io.StringIO()
+                    with redirect_stdout(buf):
+                            rc = pts.cmd_sync(args)
                 buf = io.StringIO()
                 with redirect_stdout(buf):
-                    rc = pts.cmd_sync(args)
+                        rc = pts.cmd_sync(args)
     out = buf.getvalue()
 
     assert rc == 0
@@ -226,11 +231,12 @@ def test_reauth_failed_still_returns_critical(tmp_path):
 
     with _HomeSandbox(tmp_path):
         with patch.object(pts, "fetch_and_normalize", side_effect=fake_fetch):
-            with patch.object(pts, "_silent_reauth", side_effect=fake_silent_reauth_fail):
-                args = _make_args(db_path, days=7)
-                buf = io.StringIO()
-                with redirect_stdout(buf):
-                    rc = pts.cmd_sync(args)
+            with patch("pull_to_sqlite._maybe_refresh_token_before_sync", return_value=True):
+                with patch("pull_to_sqlite._silent_reauth", side_effect=fake_silent_reauth_fail):
+                    args = _make_args(db_path, days=7)
+                    buf = io.StringIO()
+                    with redirect_stdout(buf):
+                        rc = pts.cmd_sync(args)
     out = buf.getvalue()
 
     assert rc == 0
@@ -287,11 +293,12 @@ def test_reauth_logged_to_file_not_stdout(tmp_path):
         if captured_log_path["v"].exists():
             captured_log_path["v"].unlink()
         with patch.object(pts, "fetch_and_normalize", side_effect=fake_fetch):
-            with patch.object(pts, "_silent_reauth", side_effect=fake_silent_reauth):
-                args = _make_args(db_path, days=7)
-                buf = io.StringIO()
-                with redirect_stdout(buf):
-                    rc = pts.cmd_sync(args)
+            with patch("pull_to_sqlite._maybe_refresh_token_before_sync", return_value=True):
+                with patch("pull_to_sqlite._silent_reauth", side_effect=fake_silent_reauth):
+                    args = _make_args(db_path, days=7)
+                    buf = io.StringIO()
+                    with redirect_stdout(buf):
+                        rc = pts.cmd_sync(args)
         captured_out["v"] = buf.getvalue()
 
     out = captured_out["v"]
@@ -339,11 +346,12 @@ def test_max_one_reauth_per_sync(tmp_path):
 
     with _HomeSandbox(tmp_path):
         with patch.object(pts, "fetch_and_normalize", side_effect=fake_fetch):
-            with patch.object(pts, "_silent_reauth", side_effect=fake_silent_reauth):
-                args = _make_args(db_path, days=7)
-                buf = io.StringIO()
-                with redirect_stdout(buf):
-                    rc = pts.cmd_sync(args)
+            with patch("pull_to_sqlite._maybe_refresh_token_before_sync", return_value=True):
+                with patch("pull_to_sqlite._silent_reauth", side_effect=fake_silent_reauth):
+                    args = _make_args(db_path, days=7)
+                    buf = io.StringIO()
+                    with redirect_stdout(buf):
+                        rc = pts.cmd_sync(args)
     out = buf.getvalue()
 
     assert rc == 0
@@ -381,11 +389,12 @@ def test_reauth_disabled_by_env(tmp_path):
     try:
         with _HomeSandbox(tmp_path):
             with patch.object(pts, "fetch_and_normalize", side_effect=fake_fetch):
-                with patch.object(pts, "_silent_reauth", side_effect=fake_silent_reauth):
-                    args = _make_args(db_path, days=7)
-                    buf = io.StringIO()
-                    with redirect_stdout(buf):
-                        rc = pts.cmd_sync(args)
+                with patch("pull_to_sqlite._maybe_refresh_token_before_sync", return_value=True):
+                    with patch("pull_to_sqlite._silent_reauth", side_effect=fake_silent_reauth):
+                        args = _make_args(db_path, days=7)
+                        buf = io.StringIO()
+                        with redirect_stdout(buf):
+                            rc = pts.cmd_sync(args)
     finally:
         os.environ.clear()
         os.environ.update(saved_environ)
@@ -419,11 +428,12 @@ def test_reauth_skips_when_no_critical_error(tmp_path):
 
     with _HomeSandbox(tmp_path):
         with patch.object(pts, "fetch_and_normalize", side_effect=fake_fetch):
-            with patch.object(pts, "_silent_reauth", side_effect=fake_silent_reauth):
-                args = _make_args(db_path, days=7)
-                buf = io.StringIO()
-                with redirect_stdout(buf):
-                    rc = pts.cmd_sync(args)
+            with patch("pull_to_sqlite._maybe_refresh_token_before_sync", return_value=True):
+                with patch("pull_to_sqlite._silent_reauth", side_effect=fake_silent_reauth):
+                    args = _make_args(db_path, days=7)
+                    buf = io.StringIO()
+                    with redirect_stdout(buf):
+                        rc = pts.cmd_sync(args)
     out = buf.getvalue()
 
     assert rc == 0

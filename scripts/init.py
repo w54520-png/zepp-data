@@ -321,7 +321,7 @@ def handle_oauth_exit(code: int) -> int:
     if code == 2:
         print("  ⚠ OAuth 失败 exit 2 — 通常是 token 失效 / refresh 失败")
         print("    需重新走 OAuth login (会踢一次手机 Zepp App)。")
-        print("    跑: rm ~/.zepp-data/.secrets/token.json && python3 scripts/init.py")
+        print(f"    跑: rm {DATA_DIR}/.secrets/token.json && python3 scripts/init.py")
         return 2
     print(f"  ⚠ OAuth 失败 (exit {code}) — 网络/IP 风控或未知")
     print("    暂停 30 秒重试，或换网络（换 IP / 关 VPN）")

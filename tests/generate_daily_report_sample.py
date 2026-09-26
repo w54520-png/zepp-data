@@ -3,7 +3,7 @@
 M8 日报设计 — 真实样本生成脚本（一次性）
 
 输入：
-  - Zepp SQLite DB（/root/.zepp-data/zepp.db）
+  - Zepp SQLite DB（$ZEPP_DATA_DIR/zepp.db 或 ~/.zepp-data/zepp.db）
   - 目标日期：默认 = t-1 = 2026-09-25（今天 2026-09-26）
 
 输出：

@@ -52,7 +52,13 @@ def connect(db_path):
     return conn
 
 
-def ensure_fresh(db_path: str = "/root/.zepp-data/zepp.db", max_age_sec: int = 300) -> bool:
+def ensure_fresh(db_path: str | None = None, max_age_sec: int = 300) -> bool:
+    """如果 DB 数据超过 max_age_sec 秒陈旧，自动 sync。
+
+    db_path 默认从 ZEPP_DATA_DIR 解析（与 pull_to_sqlite.py 一致）：
+      $ZEPP_DATA_DIR/zepp.db   # 若设置了环境变量
+      ~/.zepp-data/zepp.db     # fallback
+    """
     """如果 DB 数据超过 max_age_sec 秒陈旧，自动 sync。
 
     逻辑：
@@ -66,6 +72,10 @@ def ensure_fresh(db_path: str = "/root/.zepp-data/zepp.db", max_age_sec: int = 3
 
     出错：subprocess 非 0 退出码 → 打印 warning 但不 raise（让 query 用旧数据继续）。
     """
+    if db_path is None:
+        # 与 pull_to_sqlite.py 一致：尊重 ZEPP_DATA_DIR
+        data_dir = Path(os.environ.get("ZEPP_DATA_DIR", str(Path.home() / ".zepp-data")))
+        db_path = str(data_dir / "zepp.db")
     db_path = Path(db_path)
     if not db_path.exists():
         # 没有 DB 就没必要 sync 了（connect() 会提示用户跑 init）
