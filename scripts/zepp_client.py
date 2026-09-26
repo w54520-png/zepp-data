@@ -73,10 +73,33 @@ from pathlib import Path as _P
 
 
 def _resolve_secrets_path() -> str:
-    """Resolve token.json path with fallback chain."""
+    """Resolve token.json path with fallback chain.
+
+    Priority (v4.0.2+):
+      1. ZEPP_SECRETS_PATH env var (most specific — for cron jobs)
+      2. ZEPP_DATA_DIR env var + '.secrets/token.json' (NEW in v4.0.2,
+         keeps the token under the same custom data dir as the DB)
+      3. ~/.zepp-data/.secrets/token.json (default home dir)
+      4. Legacy /var/minis/workspace/zepp_data/.secrets/token.json
+         (only as last-resort hint for the caller to error with)
+
+    The 2nd fallback fixes a real bug: when a user sets ZEPP_DATA_DIR to a
+    non-default path (e.g. on a system where ~/.zepp-data/ is read-only),
+    pull_to_sqlite.py correctly looks for the DB at $ZEPP_DATA_DIR/zepp.db
+    but ZeppClient() previously kept reading ~/.zepp-data/.secrets/token.json
+    — which would be the token from the *previous* (possibly failed)
+    login attempt, causing 401s on every sync.
+    """
     env_path = os.environ.get("ZEPP_SECRETS_PATH")
     if env_path and _P(env_path).exists():
         return env_path
+
+    # NEW in v4.0.2: ZEPP_DATA_DIR consistency
+    data_dir_env = os.environ.get("ZEPP_DATA_DIR")
+    if data_dir_env:
+        candidate = _P(data_dir_env) / ".secrets" / "token.json"
+        if candidate.exists():
+            return str(candidate)
 
     home_path = _P.home() / ".zepp-data" / ".secrets" / "token.json"
     if home_path.exists():

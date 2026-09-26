@@ -62,7 +62,9 @@ export ZEPP_PASSWORD='你的真实密码'
 export ZEPP_DATA_DIR=/path/to/writable/dir
 ```
 
-所有脚本（`pull_to_sqlite.py` / `query_zepp.py` / `daily_report.py` / `dashboard*.py` 等）都会自动读这个变量。**`compute_calorie_total.py` / `fetch_workouts.py` / `insight.py` 在 v4.0.1+ 也支持这个变量。**
+所有脚本（`pull_to_sqlite.py` / `query_zepp.py` / `daily_report.py` / `dashboard*.py` 等）都会自动读这个变量。**v4.0.1+ 所有脚本都尊重这个变量；v4.0.2+ `zepp_client.py` 也用这个变量解析 token 路径**（修复了"设了 `ZEPP_DATA_DIR` 但 token 还在 `~/.zepp-data/` 导致 401"的常见 bug）。
+
+详见 [references/path-handling.md](references/path-handling.md)。
 
 ### 手机号格式
 

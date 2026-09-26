@@ -6,6 +6,36 @@ Versioning: [SemVer](https://semver.org/)
 
 ---
 
+## [4.0.2] — 2026-09-26
+
+Fixes the **most-reported v4.0.0/v4.0.1 issue**: when a user sets
+`ZEPP_DATA_DIR=/custom/path`, the SQLite database follows the new path,
+but `zepp_client.py` keeps reading `~/.zepp-data/.secrets/token.json`.
+If that home-dir token happens to be from an old (failed) login, every
+sync returns 401 even though `pull_to_sqlite.py` opens the right DB.
+
+### Fixed
+
+- **`scripts/zepp_client.py::_resolve_secrets_path()`** — added
+  `ZEPP_DATA_DIR` as a 2nd-tier fallback (after `ZEPP_SECRETS_PATH`,
+  before `~/.zepp-data/.secrets/token.json`). The token now follows the
+  data dir consistently. `ZEPP_SECRETS_PATH` is preserved for backward
+  compatibility.
+
+### Added
+
+- **`references/path-handling.md`** — single source of truth for the
+  `ZEPP_DATA_DIR` / `ZEPP_SECRETS_PATH` precedence chain, including the
+  recommended layout for read-only home dirs and migration notes for
+  users hitting the v4.0.0 401 bug.
+
+### Test status
+
+- 484 passed, 0 regressions.
+- Same 4 pre-existing failures as v4.0.1 (DST ×2, HR zone ×1, stress ×1).
+
+---
+
 ## [4.0.1] — 2026-09-26
 
 Bug-fix release addressing user-reported issues from `v4.0.0` testing on
