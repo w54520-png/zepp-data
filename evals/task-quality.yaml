@@ -1,0 +1,147 @@
+# zepp-data skill · task-quality 评测集（端到端质量）
+# 用途：跑真实端到端任务，验证输出满足 user 期望 + DB 不被污染 + 安全约束被遵守。
+# 通过标准：expected_keywords 全部出现在 stdout / 输出文件里，
+#   pass_criteria 的 check 通过对应测试。
+
+meta:
+  skill: zepp-data
+  version: "1.0"
+  baseline_date: "2026-09-24"
+  total_cases: 4
+  task_quality: 4
+  coverage:
+    - 7 日健康报告
+    - 运动 Top 5 爬升
+    - BMR 总卡路里计算
+    - Dashboard HTML 渲染
+  prerequisites:
+    - 真实 DB：~/.zepp-data/zepp.db
+    - 真实 token：~/.zepp-data/.secrets/token.json (chmod 600)
+
+# ----------------------------------------------------------------------------
+cases:
+
+  # 1. 7 日健康报告 / 周报
+  - id: quality_001_weekly_report
+    category: 周报
+    user_query: "跑一份最近 7 天的身体周报"
+    expected_steps:
+      - name: sync-if-stale
+        command: |
+          [ -f ~/.zepp-data/zepp.db ] && python3 scripts/pull_to_sqlite.py summary || python3 scripts/pull_to_sqlite.py init
+      - name: sync-7d
+        command: python3 scripts/pull_to_sqlite.py sync --days 7
+        timeout_sec: 120
+      - name: weekly-report
+        command: python3 scripts/insight.py --weekly --db ~/.zepp-data/zepp.db > /tmp/weekly.json
+        timeout_sec: 30
+    expected_output_format: |
+      JSON 顶层含 weekly_report（id, week_start, week_end, facts: list[Fact]）
+      facts 元素含 fact_id / metric / unit / value / baseline_value / direction
+    expected_keywords:
+      - weekly_report
+      - week_start
+      - week_end
+      - facts
+      - direction
+      - hrv_rmssd_daily_mean
+      - stress_score_mean
+      - sleep_duration_min
+      - weight_kg_mean
+      - pai_total
+      - sport_load_daily_sum
+      - steps_total
+    pass_criteria:
+      - 至少有 6 个 fact_id 在 facts 列表中出现
+      - week_start ≤ 今天 - 7 天，week_end ≥ 今天 - 1 天
+      - 不修改 workouts 表（用 capability diff 验证）
+      - weekly_report.id 是稳定 hash（不依赖 random）
+
+  # 2. 运动 Top 5 by 爬升
+  - id: quality_002_workouts_top_climb
+    category: 运动历史
+    user_query: "列出我爬升最多的 5 次运动"
+    expected_steps:
+      - name: ensure-data
+        command: python3 scripts/fetch_workouts.py --from 2025-01-01 2>&1 | tail -5
+      - name: query-top5
+        command: python3 scripts/query_zepp.py workouts --top climb --limit 5
+    expected_output_format: |
+      人类可读表格，每行包含运动名、日期、爬升米数、距离、用时
+    expected_keywords:
+      - Top
+      - 爬升
+      - altitude_ascend
+      - m
+      - 徒步 或 健走 或 户外跑步
+      - trackid
+    pass_criteria:
+      - 输出恰好 5 行（或更少如果 workouts 总数 < 5）
+      - 按 altitude_ascend DESC 排序
+      - 每行 sport_zh 是中文（来自 sport_catalog.json 翻译）
+      - 不含 raw_payload JSON dump（保持简洁）
+      - 不写 DB
+
+  # 3. BMR 总卡路里
+  - id: quality_003_bmr_calorie_total
+    category: BMR / 卡路里
+    user_query: "用 zepp_med 算法帮我算最近 30 天总卡路里"
+    expected_steps:
+      - name: dry-run-first
+        command: python3 scripts/compute_calorie_total.py --bmr-source zepp_med --dry-run
+        rationale: 预览不写库，看效果
+      - name: write
+        command: python3 scripts/compute_calorie_total.py --bmr-source zepp_med
+      - name: verify
+        command: |
+          python3 scripts/query_zepp.py metric --metric calories_total --days 30
+    expected_output_format: |
+      - command 输出包含 "calories_total" metric 行
+      - source_scope 列含 "computed_bmr:zepp_med"
+      - 数值 = daily_summary.activity_kcal + BMR_median
+    expected_keywords:
+      - calories_total
+      - zepp_med
+      - source_scope
+      - computed_bmr
+      - 中位数
+    pass_criteria:
+      - 新 rows 写入 measurements (metric='calories_total')
+      - daily_summary 数据缺失的日期会被跳过（不写 0）
+      - BMR 中位数 = measurements.bmr 的中位数（取最近 5 次中位，详见 docs）
+      - 写到 DB 后 summary 行数 + N（N = 实际算的天数，不是 30）
+
+  # 4. Dashboard HTML 渲染
+  - id: quality_004_dashboard_html
+    category: Dashboard
+    user_query: "帮我生成最近 30 天的健康看板 HTML"
+    expected_steps:
+      - name: generate-30d
+        command: python3 scripts/dashboard.py --days 30 > ~/.zepp-data/dashboard.html
+      - name: generate-7d
+        command: python3 scripts/dashboard_7d.py --days 7 > ~/.zepp-data/dashboard_7d.html
+      - name: validate-html
+        command: |
+          head -c 4096 ~/.zepp-data/dashboard.html | grep -E "<title>|<canvas|chart\\.js"
+    expected_output_format: |
+      单 HTML 文件（含内联 chart.js CDN 引用），无外部 CSS 依赖
+    expected_keywords:
+      - <!DOCTYPE html>
+      - chart.js
+      - PAI
+      - 步数
+      - 趋势
+      - canvas
+    pass_criteria:
+      - 文件大小 30 KB ~ 200 KB（合理范围）
+      - 不依赖外部 .css / .js 文件（单文件）
+      - DB 缺失时给出 "DB 不存在" 友好提示，而不是 traceback
+      - 空数据时不抛异常（友好提示）
+      - 生成期间不写任何 DB（reads only）
+
+# ----------------------------------------------------------------------------
+notes:
+  - 所有 quality 评测都假设 DB 已初始化；CI 中需要先跑 init + sync --days 7。
+  - cron 路径不能直接调用（Bash 死循环）；评测用单次 sync。
+  - 评测不应触发 OAuth 登录——token 文件需准备好。
+  - 评测结果应当可复现：相同 DB + 相同查询 → 相同输出（不含时间戳）。

@@ -1,0 +1,104 @@
+# zepp-data skill · should-not-trigger 评测集
+# 用途：验证当用户 query 不相关时，模型不应该调用本 skill，
+#   避免误触发污染对话或抢答其他 skill（financial-data / investing / 普通编程）。
+# 通过标准：模型应当拒绝触发，调用其他合适的 skill 或直接回答。
+
+meta:
+  skill: zepp-data
+  version: "1.0"
+  baseline_date: "2026-09-24"
+  total_cases: 8
+  positive: 0       # 全部 should_trigger = false
+  negative: 8
+  coverage:
+    - 无关键词干扰
+    - 同关键词 ≠ 健康数据（Apple Watch / Fitbit / 股票 / 天气）
+    - 同品牌词 ≠ 健康场景（手表选购 / App 教程）
+    - 与健康不沾边（编程 / 学习 / 生活）
+
+# ----------------------------------------------------------------------------
+cases:
+
+  # 1. 通用编程请求（无任何 Zepp/健康关键词）
+  - id: not_trigger_001_python_scraper
+    category: 通用编程
+    user_query: "帮我写一个 Python 爬虫，爬豆瓣电影 Top 250"
+    should_trigger: false
+    wrong_skill_candidate: null   # 普通的代码生成，不需要 skill
+    rationale: |
+      query 无任何 Zepp/华米/Amazfit/HRV/PAI/血氧 等关键词，
+      跟健康数据 0 关系。本 skill 不应被调用。
+
+  # 2. 天气查询（"健康"是无关）
+  - id: not_trigger_002_weather
+    category: 天气
+    user_query: "今天天气怎么样？要不要带伞？"
+    should_trigger: false
+    wrong_skill_candidate: null   # 应直接调用 android-weather 或 weather skill
+    rationale: |
+      query 无 Zepp/华米/Amazfit 关键词；"健康" 没出现；
+      本 skill 不应被路由。
+
+  # 3. 股票价格（"健康"歧义但明显无关）
+  - id: not_trigger_003_stock
+    category: 投资
+    user_query: "苹果股价多少？最近 30 天走势？"
+    should_trigger: false
+    wrong_skill_candidate: financial-data-query / investment-moyan
+    rationale: |
+      "苹果" 歧义指 Apple 公司，不是 Apple Watch；
+      query 上下文是投资，不触发本 skill。
+      应当路由到 financial-data-query / investment-moyan 类技能。
+
+  # 4. 学习 Rust
+  - id: not_trigger_004_learn_rust
+    category: 学习
+    user_query: "我想学 Rust，有哪些入门书推荐？"
+    should_trigger: false
+    wrong_skill_candidate: null
+    rationale: |
+      query 与 Zepp 健康数据 0 关系，不触发。
+
+  # 5. 做饭
+  - id: not_trigger_005_dinner
+    category: 生活
+    user_query: "今晚我想做 3 道菜，家里有西红柿、鸡蛋、土豆，给我推荐"
+    should_trigger: false
+    wrong_skill_candidate: null
+    rationale: |
+      query 与 Zepp 健康数据 0 关系，不触发。
+
+  # 6. 手表选购（品牌词存在但场景不是健康数据）
+  - id: not_trigger_006_watch_buying
+    category: 手表选购
+    user_query: "我想买个 Amazfit GTR 4 和 GTS 4 mini，哪个性价比更高？"
+    should_trigger: false
+    wrong_skill_candidate: null
+    rationale: |
+      含品牌词 Amazfit，但场景是产品选购不是数据同步。
+      SKILL.md "何时触发" 章节明文列出"用户只是问'手表怎么选' → 不要触发"。
+      这是设计上的"反向绑定"——只匹配"健康数据同步/查询"，不匹配"产品咨询"。
+
+  # 7. Zepp App 功能咨询（"Amazfit" 词 + 但 Zepp App 自身功能）
+  - id: not_trigger_007_zepp_app_feature
+    category: App 功能
+    user_query: "Zepp App 里那个'健康预测'功能怎么开启？我找不到设置"
+    should_trigger: false
+    wrong_skill_candidate: null
+    rationale: |
+      含品牌词 Zepp / 华米，但场景是 App 设置，不是数据同步。
+      SKILL.md "何时触发" 明文："用户在询问 Zepp App 的功能 → 不要触发"。
+      本 skill 只能处理"云端数据同步 + 自然语言查询"，不能操控手机 App UI。
+
+  # 8. 其他智能手表（Fitbit / Apple Watch）
+  - id: not_trigger_008_apple_health
+    category: 其他手表
+    user_query: "帮我同步一下我的 Apple Watch 步数数据"
+    should_trigger: false
+    wrong_skill_candidate: garmin / 未支持
+    rationale: |
+      含"同步""步数"等关键词（与 trigger_002 类似），
+      但手表品牌是 Apple Watch 不是 Amazfit/Zepp/华米。
+      本 skill 只支持 Zepp Cloud API 端点（api-user.huami.com / api-mifit.zepp.com），
+      不能解析 Apple Health DB 或 iOS HealthKit。
+      应当路由到 garmin MCP 或直接告诉用户"本 skill 不支持 Apple Watch"。

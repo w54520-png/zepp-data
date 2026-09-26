@@ -1,0 +1,46 @@
+{
+  "_meta": {
+    "source": "ZeppBridge /tmp/ZeppBridge-main/src/assets/devices/catalog.json",
+    "license": "ZeppBridge project (MIT-style, free reuse)",
+    "note": "只读 catalog（read-only）—— 跟 ZeppBridge 一样不允许修改原始字段命名；扩展字段加下划线前缀（如 _display_name_zh）",
+    "updated": "2026-09-24"
+  },
+  "devices": [
+    {
+      "catalog_id": "amazfit_gtr_mini",
+      "display_name": "Amazfit GTR Mini",
+      "name_zh": "跃我 GTR Mini",
+      "kind": "watch",
+      "product_id": 130,
+      "device_source_codes": [8519936],
+      "official_url": "https://www.amazfit.com/en/gtr-mini",
+      "_verified_user": true,
+      "_verified_at": "2026-09-23",
+      "_region_hint": "cn"
+    },
+    {
+      "catalog_id": "amazfit_balance_2",
+      "display_name": "Amazfit Balance 2 (跃我 Balance 2)",
+      "name_zh": "跃我 Balance 2",
+      "kind": "watch",
+      "product_id": 146,
+      "device_source_codes": [9568512],
+      "official_url": "https://www.amazfit.com/en/balance",
+      "_verified_user": true,
+      "_verified_at": "2026-09-24",
+      "_region_hint": "cn",
+      "_note": "2026-09-24 设备清单流新发现的型号，productId=146, deviceSource=9568512"
+    },
+    {
+      "catalog_id": "generic_unknown",
+      "display_name": "Unknown Zepp device",
+      "name_zh": "未识别 Zepp 设备",
+      "kind": "unknown",
+      "product_id": 0,
+      "device_source_codes": [],
+      "official_url": null,
+      "_is_placeholder": true,
+      "_note": "占位条目；任何 productId/deviceSource 不在已知列表时返回此条"
+    }
+  ]
+}

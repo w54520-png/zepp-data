@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 测试 / 缓存
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# 本地数据库 / token / 密码（用户私有，绝不入仓库）
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+~/.zepp-data/
+*.secrets/
+token.json
+app_token.json
+*.password
+*.token
+.env
+.env.local
+
+# 大 fixture（避免污染仓库）
+tests/fixtures/*.db
+tests/fixtures/large_*.json
+tests/__pycache__/
+
+# 日志
+*.log
+
+# 临时文件
+tmp/
+/tmp/

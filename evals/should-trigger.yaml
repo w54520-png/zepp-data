@@ -1,0 +1,186 @@
+# zepp-data skill · should-trigger 评测集
+# 用途：验证当用户 query 命中时，路由是否正确选到本 skill。
+# 通过标准：模型在收到 user_query 后，本应该调用 zepp-data 内的脚本完成任务。
+# 用法：每个 case 单独测试；也可以批量灌入 LLM 跑 recall/precision。
+
+meta:
+  skill: zepp-data
+  version: "1.0"
+  baseline_date: "2026-09-24"
+  total_cases: 9
+  positive: 9      # should_trigger = true
+  negative: 0       # 负向 case 在 should-not-trigger.yaml
+  coverage:
+    - OAuth_不踢App
+    - 数据同步
+    - 周报告查询
+    - 运动历史
+    - 睡眠查询
+    - 体重/BMI
+    - Dashboard 生成
+    - BMR 计算
+    - 国际服 fallback
+
+# ----------------------------------------------------------------------------
+cases:
+  # 1. OAuth 不踢手机 Zepp App 类
+  - id: trigger_001_oauth_not_kick
+    category: OAuth_不踢App
+    user_query: "我 Zepp 手机 App 账号总被踢下线，是不是 skill 的问题？"
+    should_trigger: true
+    expected_action: |
+      1. 阅读 SKILL.md "OAuth 不踢手机 App" 章节（line ~313）。
+      2. 检查 scripts/zepp_oauth.py 的 APP_NAME 常量（line ~96），确认是 com.xiaomi.hm.health。
+      3. 输出原理解释：Zepp 服务端按 (user_id, app_name) 维度做 session 隔离，
+         com.huami.midong 是 Zepp App 自己的包名，会被踢；
+         com.xiaomi.hm.health 是 Mi Fit 退役 id，不会踢。
+    expected_output_keywords:
+      - APP_NAME
+      - com.xiaomi.hm.health
+      - session 隔离
+      - 不踢手机 App
+      - 修复历史
+
+  # 2. 同步数据
+  - id: trigger_002_sync
+    category: 数据同步
+    user_query: "帮我同步一下最近 7 天的 Zepp 数据"
+    should_trigger: true
+    expected_action: |
+      1. 跑：python3 /var/minis/skills/zepp-data/scripts/zepp_cron_sync.sh
+         （自动 refresh → sync → dedup → fetch_workouts）
+         或者直接 python3 scripts/pull_to_sqlite.py sync --days 7
+    expected_output_keywords:
+      - refresh app_token
+      - sync data
+      - dedup
+      - fetch workouts
+      - DB 初始化
+      - raw_records
+
+  # 3. 7 日健康报告 / summary
+  - id: trigger_003_weekly_report
+    category: 周报告查询
+    user_query: "看下我最近 7 天的身体状况，给我一份周报"
+    should_trigger: true
+    expected_action: |
+      1. 先确认 DB 有数据：python3 scripts/pull_to_sqlite.py sync --days 7
+      2. 跑周报：python3 scripts/insight.py --weekly
+         或：python3 scripts/dashboard_7d.py --days 7 > ~/.zepp-data/report.html
+      3. 读 result.json 中的 7 个 fact（HRV 均值 / 压力分布 / 睡眠时长 / 体重 / PAI / 训练负荷 / 步数）
+    expected_output_keywords:
+      - WeeklyReport
+      - HRV
+      - 压力
+      - 睡眠时长
+      - PAI
+      - fact_id
+      - baseline_value
+
+  # 4. 运动历史
+  - id: trigger_004_workouts_history
+    category: 运动历史
+    user_query: "我爬过哪些山？最近 5 次爬升最多的运动"
+    should_trigger: true
+    expected_action: |
+      1. 跑：python3 scripts/query_zepp.py workouts --top climb --limit 5
+         （按 altitude_ascend DESC 取前 5）
+      2. 翻译数字 type 用 scripts/sport_catalog.py（不要自己猜）
+      3. 列出 track_id / 运动名 / 日期 / 总爬升米数
+    expected_output_keywords:
+      - altitude_ascend
+      - 徒步
+      - sport_key
+      - trackid
+      - Top
+      - LIMIT
+
+  # 5. 睡眠查询
+  - id: trigger_005_sleep_last_night
+    category: 睡眠查询
+    user_query: "昨晚我睡得怎么样？"
+    should_trigger: true
+    expected_action: |
+      1. 跑：python3 scripts/query_zepp.py recent --days 2
+         或：python3 scripts/query_zepp.py metric --metric sleep_duration --days 7
+      2. 查 sleep_sessions + sleep_stage_slices 表（band_data 解析结果）
+      3. 输出 deep / light / rem / awake 时长 + 入睡时间 + 起床时间
+    expected_output_keywords:
+      - sleep_sessions
+      - stage mode 5/4/8/11/7
+      - deep
+      - light
+      - rem
+      - nap
+      - total_sleep_minutes
+
+  # 6. 体重 / BMI / 体成分
+  - id: trigger_006_weight_bmi
+    category: 体重查询
+    user_query: "我 BMI 是多少？最近一个月体重变化趋势？"
+    should_trigger: true
+    expected_action: |
+      1. 跑：python3 scripts/query_zepp.py metric --metric weight --days 30
+      2. BMI：从 user_profile.height + measurements.metric='weight' 算 BMI = weight / (height/100)^2
+      3. 也可查：measurements WHERE stream='weight' ORDER BY ts_ms DESC
+    expected_output_keywords:
+      - BMI
+      - weight (kg)
+      - body_fat_rate
+      - skeletalMuscle
+      - visceralFat
+      - user_profile.height
+
+  # 7. Dashboard 生成
+  - id: trigger_007_dashboard
+    category: Dashboard
+    user_query: "帮我生成一个最近 30 天的健康看板 HTML"
+    should_trigger: true
+    expected_action: |
+      1. 跑：python3 scripts/dashboard.py --days 30 > ~/.zepp-data/dashboard.html
+      2. 也可跑：python3 scripts/dashboard_7d.py --days 7 > ~/.zepp-data/dashboard_7d.html
+      3. 打开 minis:// 或者 web 浏览器预览
+    expected_output_keywords:
+      - dashboard.html
+      - chart.js
+      - PAI
+      - 步数
+      - 趋势线
+      - 单文件无依赖
+
+  # 8. BMR 计算 / 总卡路里
+  - id: trigger_008_bmr_calorie
+    category: BMR
+    user_query: "用 Zepp App 实测的 BMR 帮我算一下总卡路里"
+    should_trigger: true
+    expected_action: |
+      1. 跑：python3 scripts/compute_calorie_total.py --bmr-source zepp_app
+         （默认就是 zepp_app，可省略）
+      2. 写一个新 metric calories_total 到 measurements 表
+      3. 验证：python3 scripts/query_zepp.py metric --metric calories_total --days 7
+    expected_output_keywords:
+      - 静息 BMR
+      - 活动卡路里
+      - 总卡路里
+      - zepp_app
+      - 1436 kcal
+      - source_scope
+
+  # 9. 国际服 / 区域 fallback
+  - id: trigger_009_region_fallback
+    category: 国际服
+    user_query: "我用的是国际服 Zepp，怎么拉数据？"
+    should_trigger: true
+    expected_action: |
+      1. 解释：默认走国服 fallback 链 cn3 → us3 → eu2 → sg2
+      2. 显式指定：python3 scripts/pull_to_sqlite.py sync --base-url https://api-mifit-us3.zepp.com
+      3. 或者在 ZeppClient 构造时 set_base_url(...)
+      4. OAuth Step ② 返回的 region_host 也会自动暴露所属 region
+    expected_output_keywords:
+      - REGION_FALLBACK_CHAIN
+      - api-mifit-cn3
+      - api-mifit-us3
+      - api-mifit-eu2
+      - api-mifit-sg2
+      - region_host
+      - try_regions_fallback

@@ -1,0 +1,15 @@
+You are a helpful AI assistant with access to many skills installed at /var/minis/skills/. Each skill has its own SKILL.md describing what it does.
+
+Available skills include:
+- zepp-data: Sync Zepp (Huami/Amazfit) health data to local SQLite. Use for: HRV/blood oxygen/stress/PAI/sleep/weight/workouts queries. NOT for: watch shopping, App UI, Apple Watch/Garmin/Fitbit (other brands).
+- financial-data-query: Stock/financial data
+- long-image-ocr: OCR long screenshots
+- hithink-finance: Investment analysis
+
+For each user query, decide:
+1. should_trigger_zepp_data (bool): whether zepp-data skill should be invoked
+2. tool_call (str): what specific command you'd run, or "none"
+3. reason (str): 1-sentence justification
+
+Output as JSON only, no other text. Example:
+{"should_trigger_zepp_data": true, "tool_call": "python3 /var/minis/skills/zepp-data/scripts/pull_to_sqlite.py sync --days 7", "reason": "User wants data sync"}

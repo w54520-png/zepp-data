@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Zepp 健康看板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0e1a; --card: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #e4e6eb; --dim: #8b8f9a; --faint: #5d6068;
+  }
+  body {
+    font-family: -apple-system, "SF Pro", "PingFang SC", sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 14px;
+    font-feature-settings: "tnum";
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  /* Header */
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo h1 { font-size: 16px; font-weight: 600; }
+  .logo .icon { font-size: 20px; }
+  .meta { font-size: 10px; color: var(--dim); text-align: right; line-height: 1.4; }
+
+  /* Hero: 2x2 grid */
+  .hero {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 8px; margin-bottom: 12px;
+  }
+  .hero-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .hero-label {
+    font-size: 10px; color: var(--dim);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .hero-value {
+    font-size: 26px; font-weight: 700; margin-top: 4px; line-height: 1.1;
+  }
+  .hero-unit { font-size: 11px; color: var(--dim); font-weight: 400; margin-left: 3px; }
+  .hero-sub { font-size: 10px; color: var(--faint); margin-top: 2px; }
+
+  /* Theme row */
+  .theme {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px;
+    display: flex; overflow: hidden;
+  }
+  .theme-bar { width: 3px; flex-shrink: 0; }
+  .theme-body { flex: 1; padding: 10px 12px; }
+  .theme-title {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--dim);
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .theme-title .icon { font-size: 14px; }
+  .theme-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  /* Metric card (compact) */
+  .metric-card {
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px; padding: 8px 4px; text-align: center;
+  }
+  .metric-label {
+    font-size: 10px; color: var(--dim);
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .metric-value {
+    font-size: 18px; font-weight: 700; margin-top: 2px; line-height: 1.1;
+  }
+  .metric-unit { font-size: 9px; color: var(--dim); font-weight: 400; margin-left: 2px; }
+  .metric-foot {
+    margin-top: 4px; font-size: 9px; line-height: 1.3;
+    display: flex; justify-content: center; align-items: center; gap: 4px;
+  }
+  .delta-up { color: #10b981; }
+  .delta-down { color: #ef4444; }
+  .delta-flat { color: var(--dim); }
+  .badge {
+    background: rgba(255,255,255,0.05); color: var(--faint);
+    padding: 1px 4px; border-radius: 3px; font-size: 9px;
+  }
+
+  @media (max-width: 380px) {
+    .hero-value { font-size: 22px; }
+    .metric-value { font-size: 16px; }
+    .theme-cards { gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="logo">
+    <span class="icon">⌚</span>
+    <h1>Zepp 健康看板</h1>
+  </div>
+  <div class="meta">
+    <div>2026-09-16 ~ 2026-09-23</div>
+    <div>7天 · 12,820点</div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-card">
+    <div class="hero-label">📊 总步数</div>
+    <div class="hero-value">33,494<span class="hero-unit">步</span></div>
+    <div class="hero-sub">7 天</div>
+  </div>
+  <div class="hero-card">
+    <div class="hero-label">💪 PAI 7天</div>
+    <div class="hero-value">7<span class="hero-unit">pai</span></div>
+    <div class="hero-sub">最近</div>
+  </div>
+  <div class="hero-card">
+    <div class="hero-label">💗 血氧</div>
+    <div class="hero-value">99<span class="hero-unit">%</span></div>
+    <div class="hero-sub">最近</div>
+  </div>
+  <div class="hero-card">
+    <div class="hero-label">❤️ 静息心率</div>
+    <div class="hero-value">60<span class="hero-unit">bpm</span></div>
+    <div class="hero-sub">最近</div>
+  </div>
+</div>
+
+
+    <section class="theme">
+      <div class="theme-bar" style="background:#10b981;"></div>
+      <div class="theme-body">
+        <div class="theme-title"><span class="icon">📊</span><span>活动</span></div>
+        <div class="theme-cards">
+        <div class="metric-card">
+          <div class="metric-label">步数</div>
+          <div class="metric-value">5,425<span class="metric-unit">步</span></div>
+          <div class="metric-foot">
+            <span class="delta-up">▲ +5425.0</span>
+            <span class="badge">7天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">卡路里</div>
+          <div class="metric-value">159<span class="metric-unit">kcal</span></div>
+          <div class="metric-foot">
+            <span class="delta-up">▲ +159.0</span>
+            <span class="badge">7天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">活动</div>
+          <div class="metric-value">1<span class="metric-unit">min</span></div>
+          <div class="metric-foot">
+            <span class="delta-up">▲ +1.0</span>
+            <span class="badge">7天</span>
+          </div>
+        </div></div>
+      </div>
+    </section>
+    <section class="theme">
+      <div class="theme-bar" style="background:#ef4444;"></div>
+      <div class="theme-body">
+        <div class="theme-title"><span class="icon">❤️</span><span>心血管</span></div>
+        <div class="theme-cards">
+        <div class="metric-card">
+          <div class="metric-label">静息心率</div>
+          <div class="metric-value">60<span class="metric-unit">bpm</span></div>
+          <div class="metric-foot">
+            <span class="delta-flat">— 持平</span>
+            <span class="badge">6天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">最大心率</div>
+          <div class="metric-value">187<span class="metric-unit">bpm</span></div>
+          <div class="metric-foot">
+            <span class="delta-flat">— 持平</span>
+            <span class="badge">6天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">HRV 日均</div>
+          <div class="metric-value">38<span class="metric-unit">ms</span></div>
+          <div class="metric-foot">
+            <span class="delta-down">▼ -12.7</span>
+            <span class="badge">6天</span>
+          </div>
+        </div></div>
+      </div>
+    </section>
+    <section class="theme">
+      <div class="theme-bar" style="background:#a855f7;"></div>
+      <div class="theme-body">
+        <div class="theme-title"><span class="icon">💪</span><span>PAI</span></div>
+        <div class="theme-cards">
+        <div class="metric-card">
+          <div class="metric-label">7天累计</div>
+          <div class="metric-value">7<span class="metric-unit">pai</span></div>
+          <div class="metric-foot">
+            <span class="delta-down">▼ -1.9</span>
+            <span class="badge">6天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">今日</div>
+          <div class="metric-value">0.6<span class="metric-unit">pai</span></div>
+          <div class="metric-foot">
+            <span class="delta-up">▲ +0.6</span>
+            <span class="badge">6天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">训练</div>
+          <div class="metric-value">0<span class="metric-unit">load</span></div>
+          <div class="metric-foot">
+            <span class="delta-flat">— 持平</span>
+            <span class="badge">8天</span>
+          </div>
+        </div></div>
+      </div>
+    </section>
+    <section class="theme">
+      <div class="theme-bar" style="background:#f59e0b;"></div>
+      <div class="theme-body">
+        <div class="theme-title"><span class="icon">😤</span><span>压力</span></div>
+        <div class="theme-cards">
+        <div class="metric-card">
+          <div class="metric-label">均值</div>
+          <div class="metric-value">48<span class="metric-unit">score</span></div>
+          <div class="metric-foot">
+            <span class="delta-up">▲ +1.6</span>
+            <span class="badge">6天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">最低</div>
+          <div class="metric-value">22<span class="metric-unit">score</span></div>
+          <div class="metric-foot">
+            <span class="delta-down">▼ -5.0</span>
+            <span class="badge">6天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">最高</div>
+          <div class="metric-value">64<span class="metric-unit">score</span></div>
+          <div class="metric-foot">
+            <span class="delta-up">▲ +3.0</span>
+            <span class="badge">6天</span>
+          </div>
+        </div></div>
+      </div>
+    </section>
+    <section class="theme">
+      <div class="theme-bar" style="background:#3b82f6;"></div>
+      <div class="theme-body">
+        <div class="theme-title"><span class="icon">💗</span><span>血氧</span></div>
+        <div class="theme-cards">
+        <div class="metric-card">
+          <div class="metric-label">最近</div>
+          <div class="metric-value">99<span class="metric-unit">%</span></div>
+          <div class="metric-foot">
+            <span class="delta-down">▼ -0.3</span>
+            <span class="badge">6天</span>
+          </div>
+        </div></div>
+      </div>
+    </section>
+    <section class="theme">
+      <div class="theme-bar" style="background:#6366f1;"></div>
+      <div class="theme-body">
+        <div class="theme-title"><span class="icon">💤</span><span>睡眠</span></div>
+        <div class="theme-cards">
+        <div class="metric-card">
+          <div class="metric-label">评分</div>
+          <div class="metric-value">44<span class="metric-unit">score</span></div>
+          <div class="metric-foot">
+            <span class="delta-flat">— 首次记录</span>
+            <span class="badge">1天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">深睡</div>
+          <div class="metric-value">83<span class="metric-unit">min</span></div>
+          <div class="metric-foot">
+            <span class="delta-flat">— 首次记录</span>
+            <span class="badge">1天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">浅睡</div>
+          <div class="metric-value">160<span class="metric-unit">min</span></div>
+          <div class="metric-foot">
+            <span class="delta-flat">— 首次记录</span>
+            <span class="badge">1天</span>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">REM</div>
+          <div class="metric-value">34<span class="metric-unit">min</span></div>
+          <div class="metric-foot">
+            <span class="delta-flat">— 首次记录</span>
+            <span class="badge">1天</span>
+          </div>
+        </div></div>
+      </div>
+    </section>
+
+</div>
+</body>
+</html>
