@@ -6,6 +6,37 @@ Versioning: [SemVer](https://semver.org/)
 
 ---
 
+## [4.0.3] — 2026-09-26
+
+User-experience improvements based on testing feedback from non-PRoot
+Linux and read-only home-dir environments.
+
+### Added
+
+- **`scripts/init.py`** — proactively detects when the default
+  `~/.zepp-data/` parent directory is **not writable** (e.g. read-only
+  home in corporate sandboxes, immutable `/home`, etc.) and prints a
+  clear `export ZEPP_DATA_DIR=/path/to/writable/dir` hint **before**
+  any other action. Previously the user would only discover the
+  problem after hitting `PermissionError` from a deep call stack.
+- **`scripts/pull_to_sqlite.py`** — when starting a sync, checks
+  whether the `workouts` table is empty and prints a clear hint
+  reminding the user to also run `fetch_workouts.py` (which pulls the
+  separate `workout_history` + `workout_detail` flows). Previously
+  the only symptom was a silent `no workouts in window` message from
+  the `workout_detail` stream and confusion about "where did my
+  exercise history go?".
+- **README** — added an explicit note under `pull_to_sqlite.py`:
+  `sync` does not pull workouts, and the user must run
+  `fetch_workouts.py` separately.
+
+### Test status
+
+- 484 passed, 0 regressions.
+- Same 4 pre-existing failures as v4.0.2 (DST ×2, HR zone ×1, stress ×1).
+
+---
+
 ## [4.0.2] — 2026-09-26
 
 Fixes the **most-reported v4.0.0/v4.0.1 issue**: when a user sets

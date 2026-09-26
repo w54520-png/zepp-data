@@ -1079,6 +1079,27 @@ def cmd_sync(args):
     #   refresh 失败（exit 1 / 其他）→ 不 abort，让后续 M6 silent reauth 兜底
     _maybe_refresh_token_before_sync()
 
+    # ===== v4.0.3+：workouts 流是独立的，不会被本 sync 拉到 ======
+    # 如果用户是首次 sync 或近期重新建了 DB，workouts 表可能为空
+    # → workout_detail 流会 silently 报 "no workouts in window"
+    # → 用户困惑"我的运动数据怎么没了"
+    # v4.0.3+：显式提示
+    try:
+        conn_check = sqlite3.connect(str(db_path))
+        workouts_count = conn_check.execute(
+            "SELECT COUNT(*) FROM workouts"
+        ).fetchone()[0]
+        conn_check.close()
+        if workouts_count == 0:
+            print("💡 workouts 表是空的 → workout_detail 流会报 no workouts。")
+            print("   单独跑: python3 scripts/fetch_workouts.py --from 2026-01-01")
+            print()
+    except Exception:
+        # 表不存在也是空 → 同样提示
+        print("💡 workouts 表还不存在 → workout_detail 流会报 no workouts。")
+        print("   单独跑: python3 scripts/fetch_workouts.py --from 2026-01-01")
+        print()
+
     if not SECRETS_FILE.exists():
         print(f"✗ token 不存在：{SECRETS_FILE}")
         print(f"  请先跑：python3 pull_to_sqlite.py login")

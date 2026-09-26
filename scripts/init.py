@@ -355,6 +355,26 @@ def do_uninstall() -> int:
 
 
 # ====== 主流程（DAG 编排）======
+def detect_readonly_home_dir() -> str | None:
+    """如果默认 DATA_DIR（~/.zepp-data/）所在父目录不可写，返回建议。
+
+    Return: None (OK) / "ZEPP_DATA_DIR" (需要设环境变量)
+    """
+    parent = DATA_DIR.parent
+    try:
+        # 用一个一次性 probe 测写权限（比 try mkdir 更轻量）
+        probe = parent / f".zepp_write_probe_{os.getpid()}"
+        try:
+            probe.touch()
+        except (PermissionError, OSError):
+            return "ZEPP_DATA_DIR"
+        else:
+            probe.unlink(missing_ok=True)
+            return None
+    except Exception:
+        return None
+
+
 def main() -> int:
     p = argparse.ArgumentParser(
         description="zepp-data 首次环境配置引导",
@@ -375,6 +395,16 @@ def main() -> int:
     # uninstall 提前处理
     if args.uninstall:
         return do_uninstall()
+
+    # v4.0.3+：首次诊断 read-only home dir，提前给出环境变量推荐
+    # 这样用户不用先撞 PermissionError 再去找答案
+    readonly_advice = detect_readonly_home_dir()
+    if readonly_advice and not os.environ.get("ZEPP_DATA_DIR"):
+        print(f"⚠ 默认数据目录 {DATA_DIR} 不可写（父目录 {DATA_DIR.parent} 受系统保护）")
+        print(f"  → 推荐设置环境变量指向可写位置：")
+        print(f"      export ZEPP_DATA_DIR=/path/to/writable/dir")
+        print(f"  → 详见 references/path-handling.md")
+        print()
 
     # Step 1+2: 检测 + 摘要
     state = detect_env()

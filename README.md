@@ -158,6 +158,14 @@ python3 scripts/pull_to_sqlite.py dedup
 python3 scripts/pull_to_sqlite.py login --phone 186XXXXXXXX
 ```
 
+> ⚠️ **`sync` 默认不拉运动历史（workouts）。** 运动流 `workout_history` + `workout_detail` 是单独的 stream，需要单独跑：
+>
+> ```bash
+> python3 scripts/fetch_workouts.py --from 2026-01-01
+> ```
+>
+> 否则 `workout_detail` 流会报"no workouts in window"或 `workouts` 表缺失错误。**v4.0.3+ 这个提示会在 sync 时自动出现**，v4.0.2 及之前版本需要你手动跑 fetch_workouts.py。
+
 ### `scripts/query_zepp.py`
 
 查询 DB：
