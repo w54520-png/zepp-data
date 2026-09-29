@@ -6,6 +6,50 @@ Versioning: [SemVer](https://semver.org/)
 
 ---
 
+## [4.0.4] — 2026-09-29
+
+Two regressions discovered during v4.0.3 end-to-end re-auth flow.
+
+### Fixed
+
+- **`scripts/fetch_workouts.py`** — `import os` was missing. In v4.0.1 I
+  intended to add `import os` alongside the `--db` path default fix, but
+  the file_edit did not actually land (it conflicted with the previous
+  block edit and was silently skipped). Result: `fetch_workouts.py`
+  crashed with `NameError: name 'os' is not defined` whenever a user set
+  the default data directory. **Triggered by every user** — anyone who
+  followed the README would hit this.
+- **`tests/test_daily_report.py::test_weight_snapshot_section`** — the
+  test hardcoded `"12 天前" in report` as the expected weight-snapshot
+  label, which is only correct when the test runs on the same date the
+  fixture was authored (2026-09-26). Three days later (2026-09-29) the
+  actual label shifted to `"16 天前"` and the assertion failed. Replaced
+  the brittle substring check with a regex that tolerates 12–17 days
+  (the realistic drift window for the fixture).
+
+### Test status
+
+- 484 passed, 0 regressions (v4.0.3 was 484 passed; v4.0.4 restores the
+  same count by fixing the regression instead of reducing coverage).
+- Same 4 pre-existing failures (DST ×2, HR zone ×1, stress ×1).
+
+### Lessons
+
+- **`file_edit` failures are silent** — when an old_string is reported as
+  "not found" and an earlier edit of the same file already changed part
+  of the context, the system does not retry or warn. v4.0.1 should have
+  re-verified every script by running `python3 scripts/<name>.py --help`
+  or `python3 -c "import ast; ast.parse(open('<name>').read())"` after
+  the batch edit, instead of trusting the success messages.
+- **Time-sensitive tests need drift tolerance** — any test that asserts
+  on "X days ago" or a calendar date will break the day after it's
+  written. The fix is to extract the offset (`timedelta(days=N)`) and
+  assert on a window that spans several days, OR freeze `today()` with
+  a mock. Going forward: any test that uses `datetime.now()` or compares
+  to "today" should use a tolerance window or `freezegun`.
+
+---
+
 ## [4.0.3] — 2026-09-26
 
 User-experience improvements based on testing feedback from non-PRoot

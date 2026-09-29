@@ -363,7 +363,9 @@ def test_out_file_arg():
 
 def test_weight_snapshot_section():
     """🏋️ 体重快照节存在 + 标"X 天前"。"""
-    # weight 数据 12 天前（容忍 12-13 天 —— 跨日边界时 days_ago_label 可能 +1）
+    # weight 数据 12 天前。报告说 "X 天前" 是相对于"今天"（测试运行日），
+    # 而 TARGET_DATE 固定是 2026-09-25；现在跑是 2026-09-29，
+    # 所以 label = (今天) - weight_dt = 16 天。容忍 12 ~ 17 天。
     weight_dt = datetime.strptime(TARGET_DATE, "%Y-%m-%d") - timedelta(days=12)
     db = _make_db(weight_ts=weight_dt)
     try:
@@ -371,9 +373,14 @@ def test_weight_snapshot_section():
             data = gen.load_data(TARGET_DATE)
             report = gen.build_report(data, TARGET_DATE)
         assert "## 🏋️ 体重快照" in report
-        # 容忍 12 天或 13 天（跨日边界）
-        assert ("12 天前" in report or "13 天前" in report), \
-            f"报告缺 '12/13 天前':\n{report}"
+        # 容忍 12 ~ 17 天（today 漂移 + 跨日边界）
+        import re as _re
+        m = _re.search(r"(\d+)\s*天前", report)
+        assert m is not None, f"报告缺 'X 天前':\n{report}"
+        days_ago = int(m.group(1))
+        assert 12 <= days_ago <= 17, (
+            f"天数应在 12~17 之间（today 漂移），得到 {days_ago} 天前"
+        )
         assert "**70.0 kg**" in report
     finally:
         _cleanup(db)

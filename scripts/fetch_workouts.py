@@ -19,6 +19,7 @@ Zepp Cloud 这个端点返回所有运动类型的汇总（不分 sport 路径�
 from __future__ import annotations
 import argparse
 import json
+import os
 import sqlite3
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
